@@ -124,4 +124,4 @@ npm run db:push
 
 ## Contact
 
-For more information, please contact your project administrator.
+here are some screen shots of the app and vidoe recording of how it works:
