@@ -1,4 +1,6 @@
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { UserIcon } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -7,6 +9,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
   const [location] = useLocation();
+  const { user } = useAuth();
 
   const isActive = (path: string) => {
     return location === path;
@@ -20,12 +23,12 @@ export default function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } transition-transform duration-200 ease-in-out md:hidden`}
       >
-        <SidebarContent currentPath={location} closeSidebar={closeSidebar} />
+        <SidebarContent currentPath={location} closeSidebar={closeSidebar} userName={user?.name} />
       </aside>
 
       {/* Desktop Sidebar */}
       <aside className="w-64 bg-primary text-white hidden md:block shadow-lg">
-        <SidebarContent currentPath={location} closeSidebar={closeSidebar} />
+        <SidebarContent currentPath={location} closeSidebar={closeSidebar} userName={user?.name} />
       </aside>
     </>
   );
@@ -34,9 +37,10 @@ export default function Sidebar({ isOpen, closeSidebar }: SidebarProps) {
 interface SidebarContentProps {
   currentPath: string;
   closeSidebar: () => void;
+  userName?: string;
 }
 
-function SidebarContent({ currentPath, closeSidebar }: SidebarContentProps) {
+function SidebarContent({ currentPath, closeSidebar, userName }: SidebarContentProps) {
   const isActive = (path: string) => {
     return currentPath === path;
   };
@@ -117,11 +121,11 @@ function SidebarContent({ currentPath, closeSidebar }: SidebarContentProps) {
       <div className="absolute bottom-0 w-64 p-4 border-t border-primary-light">
         <div className="flex items-center">
           <div className="h-8 w-8 rounded-full bg-primary-light flex items-center justify-center text-white">
-            <span className="material-icons text-sm">person</span>
+            <UserIcon className="h-4 w-4" />
           </div>
           <div className="ml-3">
-            <p className="text-sm font-medium">Dr. Sarah Johnson</p>
-            <p className="text-xs text-primary-light">Physician</p>
+            <p className="text-sm font-medium">{userName || 'User'}</p>
+            <p className="text-xs text-primary-light">Healthcare Professional</p>
           </div>
         </div>
       </div>

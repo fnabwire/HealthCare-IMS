@@ -6,6 +6,7 @@ import { useLocation } from "wouter";
 import ClientsTable from "@/components/dashboard/ClientsTable";
 import ClientForm from "@/components/clients/ClientForm";
 import ClientProfile from "@/components/clients/ClientProfile";
+import ClientUpdateForm from "@/components/clients/ClientUpdateForm";
 
 export default function Clients() {
   const [location] = useLocation();
@@ -17,6 +18,8 @@ export default function Clients() {
     clientIdParam ? parseInt(clientIdParam) : null
   );
   const [showClientProfile, setShowClientProfile] = useState(!!clientIdParam);
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
+  const [clientToUpdate, setClientToUpdate] = useState<Client | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch all clients
@@ -69,6 +72,17 @@ export default function Clients() {
     setShowClientProfile(false);
     refetch();
   };
+  
+  const handleEditClient = (client: Client) => {
+    setClientToUpdate(client);
+    setShowUpdateForm(true);
+  };
+  
+  const handleCloseUpdateForm = () => {
+    setShowUpdateForm(false);
+    setClientToUpdate(null);
+    refetch();
+  };
 
   return (
     <div className="space-y-6">
@@ -104,6 +118,7 @@ export default function Clients() {
         clients={filteredClients}
         title="All Clients"
         emptyMessage={isLoading ? "Loading clients..." : "No clients found"}
+        onEditClient={handleEditClient}
       />
       
       {/* Client Registration Form */}
@@ -120,6 +135,15 @@ export default function Clients() {
           clientId={selectedClientId} 
           isOpen={showClientProfile}
           onClose={handleCloseClientProfile}
+        />
+      )}
+      
+      {/* Client Update Form */}
+      {showUpdateForm && clientToUpdate && (
+        <ClientUpdateForm
+          client={clientToUpdate}
+          isOpen={showUpdateForm}
+          onClose={handleCloseUpdateForm}
         />
       )}
     </div>

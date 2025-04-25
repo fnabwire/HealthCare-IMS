@@ -58,27 +58,27 @@ export function formatProgramStatusBadge(status: string) {
     case 'active':
       return {
         label: 'Active',
-        className: 'bg-success bg-opacity-10 text-success'
+        className: 'bg-green-100 text-green-700 border border-green-300'
       };
     case 'follow-up':
       return {
         label: 'Follow-up',
-        className: 'bg-warning bg-opacity-10 text-warning'
+        className: 'bg-amber-100 text-amber-700 border border-amber-300'
       };
     case 'inactive':
       return {
         label: 'Inactive',
-        className: 'bg-neutral-500 bg-opacity-10 text-neutral-500'
+        className: 'bg-slate-100 text-slate-700 border border-slate-300'
       };
     case 'completed':
       return {
         label: 'Completed',
-        className: 'bg-primary bg-opacity-10 text-primary'
+        className: 'bg-blue-100 text-blue-700 border border-blue-300'
       };
     default:
       return {
         label: status,
-        className: 'bg-neutral-200 text-neutral-700'
+        className: 'bg-slate-100 text-slate-700 border border-slate-300'
       };
   }
 }
@@ -87,14 +87,16 @@ export function formatProgramStatusBadge(status: string) {
 export function formatProgramBadge(code: string) {
   switch (code.toUpperCase()) {
     case 'TB':
-      return 'bg-primary bg-opacity-10 text-primary';
+      return 'bg-purple-100 text-purple-700 border border-purple-300';
     case 'HIV':
-      return 'bg-secondary bg-opacity-10 text-secondary';
+      return 'bg-red-100 text-red-700 border border-red-300';
     case 'MALARIA':
-      return 'bg-secondary bg-opacity-10 text-secondary';
+      return 'bg-blue-100 text-blue-700 border border-blue-300';
     case 'DIABETES':
-      return 'bg-warning bg-opacity-10 text-warning';
+      return 'bg-emerald-100 text-emerald-700 border border-emerald-300';
+    case 'MATERNAL':
+      return 'bg-pink-100 text-pink-700 border border-pink-300';
     default:
-      return 'bg-neutral-200 text-neutral-700';
+      return 'bg-violet-100 text-violet-700 border border-violet-300';
   }
 }

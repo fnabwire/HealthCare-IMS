@@ -35,7 +35,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 
 const enrollmentFormSchema = z.object({
-  programId: z.string(),
+  programId: z.string().min(1, "Please select a program").refine(val => !isNaN(parseInt(val)), {
+    message: "Program ID must be a valid number",
+  }),
   enrollDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
     message: "Date must be in the format YYYY-MM-DD",
   }),
@@ -120,15 +122,36 @@ export default function EnrollmentForm({
   });
 
   const onSubmit = (data: EnrollmentFormValues) => {
-    setIsSubmitting(true);
-    enrollClientMutation.mutate(data);
+    try {
+      setIsSubmitting(true);
+      console.log("Submitting form with data:", data);
+      // Ensure programId is a valid number
+      if (!data.programId || isNaN(parseInt(data.programId))) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a valid program",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      enrollClientMutation.mutate(data);
+    } catch (error) {
+      console.error("Error in form submission:", error);
+      setIsSubmitting(false);
+      toast({
+        title: "Error",
+        description: "Failed to submit enrollment form",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-neutral-800">Enroll Client in Program</DialogTitle>
+          <DialogTitle className="text-lg font-semibold gradient-text">Enroll Client in Program</DialogTitle>
           <DialogDescription>
             Enroll this client in a health program
           </DialogDescription>
@@ -137,10 +160,10 @@ export default function EnrollmentForm({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <FormLabel className="text-sm font-medium text-neutral-700">Client</FormLabel>
-              <div className="bg-neutral-100 p-3 rounded-md mt-1">
-                <p className="font-medium">{client.name}</p>
-                <p className="text-sm text-neutral-500">{client.clientId}</p>
+              <FormLabel className="text-sm font-medium text-foreground/80">Client</FormLabel>
+              <div className="bg-muted/40 p-3 rounded-md mt-1 border border-border/40">
+                <p className="font-medium text-foreground">{client.name}</p>
+                <p className="text-sm text-muted-foreground">{client.clientId}</p>
               </div>
             </div>
 
@@ -149,13 +172,13 @@ export default function EnrollmentForm({
               name="programId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium text-neutral-700">Program</FormLabel>
+                  <FormLabel className="text-sm font-medium text-foreground/80">Program</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger className="w-full px-3 py-2 border border-neutral-300 rounded-md">
+                      <SelectTrigger className="w-full border-border">
                         <SelectValue placeholder="Select Program" />
                       </SelectTrigger>
                     </FormControl>
@@ -173,7 +196,7 @@ export default function EnrollmentForm({
                       )}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
+                  <FormMessage className="text-destructive font-medium text-xs mt-1" />
                 </FormItem>
               )}
             />
@@ -183,15 +206,15 @@ export default function EnrollmentForm({
               name="enrollDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium text-neutral-700">Enrollment Date</FormLabel>
+                  <FormLabel className="text-sm font-medium text-foreground/80">Enrollment Date</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       type="date"
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-md"
+                      className="w-full border-border"
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-destructive font-medium text-xs mt-1" />
                 </FormItem>
               )}
             />
@@ -201,37 +224,37 @@ export default function EnrollmentForm({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium text-neutral-700">Enrollment Notes</FormLabel>
+                  <FormLabel className="text-sm font-medium text-foreground/80">Enrollment Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       placeholder="Any notes about this enrollment..."
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-md"
+                      className="w-full border-border resize-none"
                       rows={3}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-destructive font-medium text-xs mt-1" />
                 </FormItem>
               )}
             />
 
             <div>
-              <FormLabel className="block text-sm font-medium text-neutral-700 mb-1">
+              <FormLabel className="block text-sm font-medium text-foreground/80 mb-1">
                 Initial Assessment
               </FormLabel>
-              <div className="p-3 border border-neutral-200 rounded-md space-y-3">
+              <div className="p-4 border border-border/40 bg-muted/10 rounded-md space-y-3 shadow-sm">
                 <FormField
                   control={form.control}
                   name="symptomSeverity"
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between">
-                      <FormLabel className="text-sm">Symptom Severity</FormLabel>
+                      <FormLabel className="text-sm text-foreground/80">Symptom Severity</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-40 border border-neutral-300 rounded-md py-1 px-2 text-sm">
+                          <SelectTrigger className="w-40 border-border py-1 px-2 text-sm">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
@@ -250,13 +273,13 @@ export default function EnrollmentForm({
                   name="riskLevel"
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between">
-                      <FormLabel className="text-sm">Risk Level</FormLabel>
+                      <FormLabel className="text-sm text-foreground/80">Risk Level</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-40 border border-neutral-300 rounded-md py-1 px-2 text-sm">
+                          <SelectTrigger className="w-40 border-border py-1 px-2 text-sm">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
@@ -275,13 +298,13 @@ export default function EnrollmentForm({
                   name="followUpRequired"
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between">
-                      <FormLabel className="text-sm">Follow-up Required</FormLabel>
+                      <FormLabel className="text-sm text-foreground/80">Follow-up Required</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-40 border border-neutral-300 rounded-md py-1 px-2 text-sm">
+                          <SelectTrigger className="w-40 border-border py-1 px-2 text-sm">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
@@ -301,14 +324,14 @@ export default function EnrollmentForm({
                 type="button" 
                 variant="outline" 
                 onClick={onClose}
-                className="px-4 py-2 border border-neutral-300 rounded-md text-neutral-700 bg-white hover:bg-neutral-50"
+                className="border-border"
               >
                 Cancel
               </Button>
               <Button 
                 type="submit" 
                 disabled={isSubmitting || isLoadingPrograms}
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {isSubmitting ? 'Enrolling...' : 'Enroll Client'}
               </Button>

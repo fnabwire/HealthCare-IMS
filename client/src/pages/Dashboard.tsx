@@ -71,19 +71,19 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-neutral-800">Dashboard</h2>
-        <div className="flex space-x-2">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="gradient-text">Dashboard Overview</h2>
+        <div className="flex space-x-3">
           <button 
-            className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-md transition-colors duration-150 flex items-center"
+            className="btn-primary flex items-center shadow-sm"
             onClick={() => setShowClientForm(true)}
           >
             <span className="material-icons mr-1 text-sm">person_add</span>
             Register Client
           </button>
           <button 
-            className="bg-secondary hover:bg-secondary-dark text-white px-4 py-2 rounded-md transition-colors duration-150 flex items-center"
+            className="btn-secondary flex items-center shadow-sm"
             onClick={() => setShowProgramForm(true)}
           >
             <span className="material-icons mr-1 text-sm">add_circle</span>
@@ -94,30 +94,39 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard 
-          title="Total Clients" 
-          value={isLoadingStats ? 0 : stats?.totalClients || 0} 
-          icon="person" 
-          iconColor="text-primary" 
-          iconBgColor="bg-primary-light"
-          percentChange={12}
-        />
-        <StatCard 
-          title="Active Programs" 
-          value={isLoadingStats ? 0 : stats?.activePrograms || 0} 
-          icon="healing" 
-          iconColor="text-secondary" 
-          iconBgColor="bg-secondary-light"
-          percentChange={3}
-        />
-        <StatCard 
-          title="New Enrollments" 
-          value={isLoadingStats ? 0 : stats?.newEnrollments || 0} 
-          icon="assignment_ind" 
-          iconColor="text-warning" 
-          iconBgColor="bg-warning"
-          percentChange={18}
-        />
+        <div className="bg-card rounded-xl shadow-sm border border-border/40 p-6 card-hover">
+          <StatCard 
+            title="Total Clients" 
+            value={isLoadingStats ? 0 : stats?.totalClients || 0} 
+            icon="group" 
+            iconColor="text-primary-foreground" 
+            iconBgColor="bg-primary"
+            percentChange={12}
+            changeText="since last month"
+          />
+        </div>
+        <div className="bg-card rounded-xl shadow-sm border border-border/40 p-6 card-hover">
+          <StatCard 
+            title="Active Programs" 
+            value={isLoadingStats ? 0 : stats?.activePrograms || 0} 
+            icon="healing" 
+            iconColor="text-secondary-foreground" 
+            iconBgColor="bg-secondary"
+            percentChange={3}
+            changeText="since last month"
+          />
+        </div>
+        <div className="bg-card rounded-xl shadow-sm border border-border/40 p-6 card-hover">
+          <StatCard 
+            title="New Enrollments" 
+            value={isLoadingStats ? 0 : stats?.newEnrollments || 0} 
+            icon="assignment_ind" 
+            iconColor="text-accent-foreground" 
+            iconBgColor="bg-accent"
+            percentChange={18}
+            changeText="this week"
+          />
+        </div>
       </div>
 
       {/* Recent Clients */}
@@ -130,28 +139,39 @@ export default function Dashboard() {
       />
 
       {/* Health Programs */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-neutral-200 flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Active Health Programs</h3>
+      <div className="bg-card rounded-xl shadow-sm overflow-hidden border border-border/40">
+        <div className="px-6 py-4 border-b border-border/60 flex justify-between items-center">
+          <h3 className="font-semibold text-primary">Active Health Programs</h3>
           <button 
-            className="text-primary text-sm hover:underline"
+            className="text-primary hover:text-primary/80 flex items-center text-sm transition-colors"
             onClick={handleViewAllPrograms}
           >
             View All
+            <span className="material-icons ml-1 text-sm">arrow_forward</span>
           </button>
         </div>
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {isLoadingPrograms ? (
-            <div className="col-span-full text-center py-4 text-neutral-500">
-              Loading programs...
+            <div className="col-span-full text-center py-8 text-muted-foreground">
+              <span className="material-icons animate-spin mb-2">refresh</span>
+              <p>Loading programs...</p>
             </div>
           ) : programs && programs.length > 0 ? (
             programs.map(program => (
-              <ProgramCard key={program.id} program={program} />
+              <div key={program.id} className="card-hover">
+                <ProgramCard program={program} />
+              </div>
             ))
           ) : (
-            <div className="col-span-full text-center py-4 text-neutral-500">
-              No active health programs found
+            <div className="col-span-full text-center py-8 text-muted-foreground">
+              <span className="material-icons mb-2 text-4xl">healing</span>
+              <p>No active health programs found</p>
+              <button 
+                onClick={() => setShowProgramForm(true)}
+                className="mt-2 text-secondary hover:text-secondary/80"
+              >
+                Create your first program
+              </button>
             </div>
           )}
         </div>

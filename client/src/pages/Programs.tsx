@@ -1,12 +1,26 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Program, ProgramWithEnrollments } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import ProgramForm from "@/components/programs/ProgramForm";
+import ProgramUpdateForm from "@/components/programs/ProgramUpdateForm";
 import ProgramCard from "@/components/dashboard/ProgramCard";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Programs() {
+  const { toast } = useToast();
   const [location] = useLocation();
   const params = new URLSearchParams(location.split("?")[1]);
   const programIdParam = params.get("id");
@@ -15,6 +29,10 @@ export default function Programs() {
   const [selectedProgramId, setSelectedProgramId] = useState<number | null>(
     programIdParam ? parseInt(programIdParam) : null
   );
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
+  const [programToUpdate, setProgramToUpdate] = useState<Program | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [programToDelete, setProgramToDelete] = useState<Program | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch all programs with enrollment counts
@@ -45,6 +63,51 @@ export default function Programs() {
   const handleCloseProgramForm = () => {
     setShowProgramForm(false);
     refetch();
+  };
+  
+  const handleEditProgram = (program: Program) => {
+    setProgramToUpdate(program);
+    setShowUpdateForm(true);
+  };
+  
+  const handleCloseUpdateForm = () => {
+    setShowUpdateForm(false);
+    setProgramToUpdate(null);
+    refetch();
+  };
+  
+  const handleDeleteProgram = (program: Program) => {
+    setProgramToDelete(program);
+    setShowDeleteDialog(true);
+  };
+
+  const deleteProgramMutation = useMutation({
+    mutationFn: async () => {
+      if (!programToDelete) return;
+      await apiRequest("DELETE", `/api/programs/${programToDelete.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/programs'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/programs/stats'] });
+      toast({
+        title: "Success",
+        description: "Program deleted successfully"
+      });
+      setShowDeleteDialog(false);
+      setProgramToDelete(null);
+      refetch();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete program",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  const handleDeleteConfirm = () => {
+    deleteProgramMutation.mutate();
   };
 
   return (
@@ -89,7 +152,11 @@ export default function Programs() {
           ) : filteredPrograms && filteredPrograms.length > 0 ? (
             filteredPrograms.map(program => (
               <div key={program.id} className="relative">
-                <ProgramCard program={program} />
+                <ProgramCard 
+                  program={program} 
+                  onEdit={handleEditProgram}
+                  onDelete={handleDeleteProgram}
+                />
                 <div className="absolute top-2 right-2">
                   {program.enrollmentCount > 0 && (
                     <span className="px-2 py-1 text-xs rounded-full bg-primary text-white">
@@ -114,8 +181,38 @@ export default function Programs() {
           onClose={handleCloseProgramForm}
         />
       )}
-
-      {/* Program Details View would go here */}
+      
+      {/* Program Update Form */}
+      {showUpdateForm && programToUpdate && (
+        <ProgramUpdateForm
+          program={programToUpdate}
+          isOpen={showUpdateForm}
+          onClose={handleCloseUpdateForm}
+        />
+      )}
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the program
+              {programToDelete ? ` "${programToDelete.name}" (${programToDelete.code})` : ''} 
+              and remove its data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleteProgramMutation.isPending ? 'Deleting...' : 'Delete Program'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
