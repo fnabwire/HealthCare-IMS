@@ -33,8 +33,8 @@ HealthTrack is a comprehensive health information system designed for healthcare
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/healthtrack.git
-   cd healthtrack
+   git clone https://github.com/fnabwire/HealthCare-IMS.git
+   cd HealthCare-IMS
    ```
 
 2. Install dependencies:
@@ -45,7 +45,7 @@ HealthTrack is a comprehensive health information system designed for healthcare
 3. Set up environment variables by creating a `.env` file in the root directory:
    ```
    # Database configuration
-   DATABASE_URL=postgresql://username:password@localhost:5432/healthtrack
+   DATABASE_URL=postgresql://username:password@localhost:5432/HealthCare-IMS
    
    # Session secret (generate a random string)
    SESSION_SECRET=your_session_secret_here
