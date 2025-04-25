@@ -86,6 +86,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  app.put(`${API_PREFIX}/programs/:id`, isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid program ID" });
+      }
+      
+      // Make sure program exists
+      const existingProgram = await storage.getProgramById(id);
+      if (!existingProgram) {
+        return res.status(404).json({ message: "Program not found" });
+      }
+      
+      const updateProgramSchema = insertProgramSchema.partial();
+      const validatedData = updateProgramSchema.safeParse(req.body);
+      
+      if (!validatedData.success) {
+        const errorMessage = fromZodError(validatedData.error).message;
+        return res.status(400).json({ message: errorMessage });
+      }
+      
+      // If the code is being updated, check if it's unique
+      if (validatedData.data.code && validatedData.data.code !== existingProgram.code) {
+        const programWithCode = await storage.getProgramByCode(validatedData.data.code);
+        if (programWithCode && programWithCode.id !== id) {
+          return res.status(409).json({ message: "Program code already exists" });
+        }
+      }
+      
+      const updatedProgram = await storage.updateProgram(id, validatedData.data);
+      res.json(updatedProgram);
+    } catch (error) {
+      console.error("Error updating program:", error);
+      res.status(500).json({ message: "Failed to update program" });
+    }
+  });
+  
+  app.delete(`${API_PREFIX}/programs/:id`, isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid program ID" });
+      }
+      
+      // Make sure program exists
+      const existingProgram = await storage.getProgramById(id);
+      if (!existingProgram) {
+        return res.status(404).json({ message: "Program not found" });
+      }
+      
+      try {
+        const success = await storage.deleteProgram(id);
+        if (!success) {
+          return res.status(500).json({ message: "Failed to delete program" });
+        }
+        res.status(204).end();
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("active enrollments")) {
+          return res.status(409).json({ message: error.message });
+        }
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error deleting program:", error);
+      res.status(500).json({ message: "Failed to delete program" });
+    }
+  });
+  
   // Client routes
   app.get(`${API_PREFIX}/clients`, async (req, res) => {
     try {
@@ -159,6 +227,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating client:", error);
       res.status(500).json({ message: "Failed to create client" });
+    }
+  });
+  
+  app.put(`${API_PREFIX}/clients/:id`, isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid client ID" });
+      }
+      
+      // Make sure client exists
+      const existingClient = await storage.getClientById(id);
+      if (!existingClient) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      // Create a schema for client update that makes all fields optional
+      const updateClientSchema = insertClientSchema.partial();
+      const validatedData = updateClientSchema.safeParse(req.body);
+      
+      if (!validatedData.success) {
+        const errorMessage = fromZodError(validatedData.error).message;
+        return res.status(400).json({ message: errorMessage });
+      }
+      
+      // If clientId is being changed, check if it's already in use
+      if (validatedData.data.clientId && validatedData.data.clientId !== existingClient.clientId) {
+        const clientWithId = await storage.getClientByClientId(validatedData.data.clientId);
+        if (clientWithId && clientWithId.id !== id) {
+          return res.status(409).json({ message: "Client ID already exists" });
+        }
+      }
+      
+      const updatedClient = await storage.updateClient(id, validatedData.data);
+      res.json(updatedClient);
+    } catch (error) {
+      console.error("Error updating client:", error);
+      res.status(500).json({ message: "Failed to update client" });
+    }
+  });
+  
+  app.delete(`${API_PREFIX}/clients/:id`, isAuthenticated, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid client ID" });
+      }
+      
+      // Make sure client exists
+      const existingClient = await storage.getClientById(id);
+      if (!existingClient) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      try {
+        const success = await storage.deleteClient(id);
+        if (!success) {
+          return res.status(500).json({ message: "Failed to delete client" });
+        }
+        res.status(204).end();
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("active enrollments")) {
+          return res.status(409).json({ message: error.message });
+        }
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      res.status(500).json({ message: "Failed to delete client" });
     }
   });
   

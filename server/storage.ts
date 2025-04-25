@@ -26,12 +26,16 @@ export interface IStorage {
   getProgramById(id: number): Promise<Program | undefined>;
   getProgramByCode(code: string): Promise<Program | undefined>;
   createProgram(program: InsertProgram): Promise<Program>;
+  updateProgram(id: number, programData: Partial<InsertProgram>): Promise<Program | undefined>;
+  deleteProgram(id: number): Promise<boolean>;
   
   // Client operations
   getClients(): Promise<Client[]>;
   getClientById(id: number): Promise<Client | undefined>;
   getClientByClientId(clientId: string): Promise<Client | undefined>;
   createClient(client: InsertClient): Promise<Client>;
+  updateClient(id: number, clientData: Partial<InsertClient>): Promise<Client | undefined>;
+  deleteClient(id: number): Promise<boolean>;
   searchClients(query: string): Promise<Client[]>;
   
   // Enrollment operations
@@ -105,6 +109,35 @@ export class DatabaseStorage implements IStorage {
     return program;
   }
 
+  async updateProgram(id: number, programData: Partial<InsertProgram>): Promise<Program | undefined> {
+    const [updatedProgram] = await db
+      .update(programs)
+      .set(programData)
+      .where(eq(programs.id, id))
+      .returning();
+    
+    return updatedProgram;
+  }
+  
+  async deleteProgram(id: number): Promise<boolean> {
+    // Check if program has any enrollments to avoid foreign key constraint issues
+    const programEnrollments = await db
+      .select()
+      .from(enrollments)
+      .where(eq(enrollments.programId, id));
+      
+    if (programEnrollments.length > 0) {
+      throw new Error("Cannot delete program with active enrollments");
+    }
+    
+    const result = await db
+      .delete(programs)
+      .where(eq(programs.id, id))
+      .returning({ id: programs.id });
+      
+    return result.length > 0;
+  }
+
   async createProgram(program: InsertProgram): Promise<Program> {
     const [newProgram] = await db.insert(programs).values(program).returning();
     return newProgram;
@@ -123,6 +156,35 @@ export class DatabaseStorage implements IStorage {
   async getClientByClientId(clientId: string): Promise<Client | undefined> {
     const [client] = await db.select().from(clients).where(eq(clients.clientId, clientId));
     return client;
+  }
+  
+  async updateClient(id: number, clientData: Partial<InsertClient>): Promise<Client | undefined> {
+    const [updatedClient] = await db
+      .update(clients)
+      .set(clientData)
+      .where(eq(clients.id, id))
+      .returning();
+    
+    return updatedClient;
+  }
+  
+  async deleteClient(id: number): Promise<boolean> {
+    // First check if client has any enrollments to avoid foreign key constraint issues
+    const clientEnrollments = await db
+      .select()
+      .from(enrollments)
+      .where(eq(enrollments.clientId, id));
+      
+    if (clientEnrollments.length > 0) {
+      throw new Error("Cannot delete client with active enrollments");
+    }
+    
+    const result = await db
+      .delete(clients)
+      .where(eq(clients.id, id))
+      .returning({ id: clients.id });
+      
+    return result.length > 0;
   }
 
   async createClient(client: InsertClient): Promise<Client> {
